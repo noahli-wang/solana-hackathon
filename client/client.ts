@@ -1,7 +1,6 @@
 
 import * as anchor from "@anchor-lang/core";import * as web3 from "@solana/web3.js";
-import type { BountyBoard } from "../target/types/bounty_board";
-// Main function for interacting with the Solana blockchain.
+import type { BountyBoard } from "../target/types/bounty_board";// Main function for interacting with the Solana blockchain.
 async function main() {
 
     // Connect to the configured Solana network and wallet.
@@ -11,8 +10,7 @@ async function main() {
     anchor.setProvider(provider);
 
     // Get our HelloAnchor program.
-    const program = anchor.workspace.BountyBoard as anchor.Program<BountyBoard>;    // Display the wallet's public address.
-    console.log(
+    const program = anchor.workspace.BountyBoard as anchor.Program<BountyBoard>;    console.log(
         "My address:",
         provider.wallet.publicKey.toString()
     );
