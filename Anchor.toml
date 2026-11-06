@@ -1,16 +1,19 @@
+skip_local_validator = true
+
+[toolchain]
+
 [features]
-seeds = false
+resolution = true
 skip-lint = false
 
-
-
-[registry]
-url = "https://api.apr.dev"
+[programs.localnet]
+solana_hackathon_new = "FNzYUjY2qZiAuBD73Uo9RUDzpkqDFCCRdnBFirSYEpZH"
 
 [provider]
-cluster = "Localnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-client = "yarn run ts-node client/*.ts"
+test = "cargo test"
+
+[hooks]
