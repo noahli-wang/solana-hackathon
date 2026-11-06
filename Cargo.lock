@@ -726,6 +726,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bounty-board"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "litesvm",
+ "solana-keypair",
+ "solana-message",
+ "solana-signer",
+ "solana-transaction",
+]
+
+[[package]]
 name = "bs58"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2746,18 +2758,6 @@ dependencies = [
  "solana-address 2.6.1",
  "solana-define-syscall 5.2.0",
  "solana-program-error",
-]
-
-[[package]]
-name = "solana-hackathon-new"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "litesvm",
- "solana-keypair",
- "solana-message",
- "solana-signer",
- "solana-transaction",
 ]
 
 [[package]]

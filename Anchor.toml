@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-solana_hackathon_new = "FNzYUjY2qZiAuBD73Uo9RUDzpkqDFCCRdnBFirSYEpZH"
+bounty_board = "FNzYUjY2qZiAuBD73Uo9RUDzpkqDFCCRdnBFirSYEpZH"
 
 [provider]
 cluster = "localnet"

@@ -14,25 +14,25 @@ use {
 
 #[test]
 fn test_initialize() {
-    let program_id = solana_hackathon_new::id();
+    let program_id = bounty_board::id();
     let payer = Keypair::new();
     let counter = Pubkey::find_program_address(
-        &[solana_hackathon_new::constants::COUNTER_SEED],
+        &[bounty_board::constants::COUNTER_SEED],
         &program_id,
     )
     .0;
     let mut svm = LiteSVM::new();
     let bytes = include_bytes!(concat!(
         env!("CARGO_TARGET_TMPDIR"),
-        "/../deploy/solana_hackathon_new.so"
+        "/../deploy/bounty_board.so"
     ));
     svm.add_program(program_id, bytes).unwrap();
     svm.airdrop(&payer.pubkey(), 1_000_000_000).unwrap();
 
     let instruction = Instruction::new_with_bytes(
         program_id,
-        &solana_hackathon_new::instruction::Initialize {}.data(),
-        solana_hackathon_new::accounts::Initialize {
+        &bounty_board::instruction::Initialize {}.data(),
+        bounty_board::accounts::Initialize {
             payer: payer.pubkey(),
             counter,
             system_program: system_program::ID,
@@ -49,14 +49,14 @@ fn test_initialize() {
 
     let counter_account = svm.get_account(&counter).unwrap();
     let mut data: &[u8] = &counter_account.data;
-    let counter_state = solana_hackathon_new::state::Counter::try_deserialize(&mut data).unwrap();
+    let counter_state = bounty_board::state::Counter::try_deserialize(&mut data).unwrap();
     assert_eq!(counter_state.count, 0);
     assert_eq!(counter_state.authority, payer.pubkey());
 
     let instruction = Instruction::new_with_bytes(
         program_id,
-        &solana_hackathon_new::instruction::Increment {}.data(),
-        solana_hackathon_new::accounts::Increment {
+        &bounty_board::instruction::Increment {}.data(),
+        bounty_board::accounts::Increment {
             counter,
             authority: payer.pubkey(),
         }
@@ -72,7 +72,7 @@ fn test_initialize() {
 
     let counter_account = svm.get_account(&counter).unwrap();
     let mut data: &[u8] = &counter_account.data;
-    let counter_state = solana_hackathon_new::state::Counter::try_deserialize(&mut data).unwrap();
+    let counter_state = bounty_board::state::Counter::try_deserialize(&mut data).unwrap();
     assert_eq!(counter_state.count, 1);
     assert_eq!(counter_state.authority, payer.pubkey());
 }

@@ -1,12 +1,12 @@
 
 import * as anchor from "@anchor-lang/core";
-import type { SolanaHackathonNew } from "../target/types/solana_hackathon_new";
+import type { BountyBoard } from "../target/types/bounty_board";
 
-describe("solana-hackathon-new", () => {
+describe("bounty-board", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace
-    .SolanaHackathonNew as anchor.Program<SolanaHackathonNew>;
+    .BountyBoard as anchor.Program<BountyBoard>;
 
   it("initializes", async () => {
     const txHash = await program.methods.initialize().rpc();

@@ -12,7 +12,7 @@ pub use state::*;
 declare_id!("FNzYUjY2qZiAuBD73Uo9RUDzpkqDFCCRdnBFirSYEpZH");
 
 #[program]
-pub mod solana_hackathon_new {
+pub mod bounty_board {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
