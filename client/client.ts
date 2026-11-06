@@ -1,8 +1,6 @@
 
-import * as anchor from "@coral-xyz/anchor";
-import * as web3 from "@solana/web3.js";
-import type { HelloAnchor } from "../target/types/hello_anchor";
-
+import * as anchor from "@anchor-lang/core";import * as web3 from "@solana/web3.js";
+import type { SolanaHackathonNew } from "../target/types/solana_hackathon_new";
 // Main function for interacting with the Solana blockchain.
 async function main() {
 
@@ -13,9 +11,7 @@ async function main() {
     anchor.setProvider(provider);
 
     // Get our HelloAnchor program.
-    const program = anchor.workspace.HelloAnchor as anchor.Program<HelloAnchor>;
-
-    // Display the wallet's public address.
+    const program = anchor.workspace.SolanaHackathonNew as anchor.Program<SolanaHackathonNew>;    // Display the wallet's public address.
     console.log(
         "My address:",
         provider.wallet.publicKey.toString()

@@ -1,6 +1,5 @@
 
-import * as anchor from "@coral-xyz/anchor";
-
+import * as anchor from "@anchor-lang/core";
 // Migration script for deploying the Anchor program.
 module.exports = async function (
     provider: anchor.AnchorProvider
