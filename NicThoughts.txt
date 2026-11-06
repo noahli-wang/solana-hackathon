@@ -1,0 +1,27 @@
+Idea: Bounty Board
+
+Description: We want a list of jobs that a user can fullfill for recieving Solana coins
+
+(M) - Mandatory
+(O) - Optional, but makes the project a bit stronger
+
+Each job will have the following:
+ - (M) A title that will describe the job briefly
+ - (M) A description that will explain each job in more detail
+ - (M) Show payment amount
+ - (M) Show a deadline for the job to be complete
+ - (M) Have the option to click on the job posting and show all the information above in 
+    more detail/ by itself (like clicking on a product on amazon)
+ - (O) A 'bookmark' button that the user can use to save the job in their 'Bookmarks' tab 
+
+The board will have the following:
+ - (M) It will show a scrollable listing of recommended jobs. This will be called the 'Board' for simplicity
+ - (M) There will be pages, where one page will have n number of jobs (for example 20 jobs on one page)
+ - (M) You can switch pages at the bottom of the scrollable Board
+ - (O) A filter at the top that the user can use to filter jobs (more info found below)
+ - (M) A search bar at the top for the user to search jobs
+
+(O) There will be a side bar that has the following:
+ - A 'Jobs' button that will bring the user to the jobs listing Board
+ - A 'Bookmarks' button that will bring the user to their bookmarked jobs
+ - A 'Settings' button that will take the user to the settings page
