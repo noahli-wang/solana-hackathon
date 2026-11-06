@@ -6,4 +6,10 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Counter has reached the maximum value")]
     CounterOverflow,
-}
+
+    #[msg("Title must contain between 1 and 64 bytes")]
+    InvalidTitle,
+
+    #[msg("Reward must be greater than zero")]
+    InvalidReward,
+    }

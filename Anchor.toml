@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-bounty_board = "FNzYUjY2qZiAuBD73Uo9RUDzpkqDFCCRdnBFirSYEpZH"
+bounty_board = "DorphgTj2n5swnnt53Edymkds7P1MDjoKfQRRNC79weT"
 
 [provider]
 cluster = "localnet"
