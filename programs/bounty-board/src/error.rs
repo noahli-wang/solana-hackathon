@@ -36,6 +36,26 @@ pub enum ErrorCode {
 
     #[msg("Invalid submission reference")]
     InvalidSubmission,
+    #[msg("Only the bounty creator can do this")]
+    NotCreator,
+
+    #[msg("Only the assigned worker can do this")]
+    WrongWorker,
+
+    #[msg("Bounty is not in the Accepted state")]
+    BountyNotAccepted,
+
+    #[msg("Work has not been submitted yet")]
+    WorkNotSubmitted,
+
+    #[msg("Submission reference must contain between 1 and 200 bytes")]
+    InvalidSubmission,
+
+    #[msg("Bounty can only be cancelled while being open, or after the deadline if the work has not been submitted")]
+    CannotCancel,
+
+    #[msg("Bounty account does not hold enough lamports to pay the reward")]
+    InsufficientEscrow
     }
 
  

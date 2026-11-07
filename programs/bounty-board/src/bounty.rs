@@ -112,6 +112,12 @@ pub fn handler(
         ErrorCode::InvalidReward
     );
 
+    // Creator of Bounty has lamparts
+    require!(
+        ctx.accounts.creator.to_account_info().lamports() >= reward_lamports,
+        ErrorCode::InsufficientEscrow
+    );
+
     // The deadline must be later than the blockchain's current time
     let current_time = Clock::get()?.unix_timestamp;
 
@@ -120,6 +126,17 @@ pub fn handler(
         ErrorCode::InvalidDeadline
     );
 
+    // Escrow: Creating a Transfer type that will hold some context for the system
+    // to use to transfer successfully
+    let cpi_accounts = anchor_lang::system_program::Transfer {
+        from : ctx.accounts.creator.to_account_info(),
+        to : ctx.accounts.bounty.to_account_info(),
+    };
+
+    let cpi_ctx = CpiContext::new(anchor_lang::system_program::ID, cpi_accounts);
+    anchor_lang::system_program::transfer(cpi_ctx, reward_lamports)?;
+
+    
     // Initialize the new bounty's fields
     let bounty = &mut ctx.accounts.bounty;
 
