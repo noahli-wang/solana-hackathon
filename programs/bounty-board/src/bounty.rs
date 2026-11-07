@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use crate::error::ErrorCode;
 
+// Represents the different stages of a bounty's lifecycle.
 
-//Possible stages within the bounty
 #[derive(
     AnchorSerialize,
     AnchorDeserialize,
@@ -12,8 +12,7 @@ use crate::error::ErrorCode;
     Eq,
     InitSpace
 )]
-
-pub enum BountyStatus{
+pub enum BountyStatus {
     Open,
     Accepted,
     Submitted,
@@ -21,50 +20,49 @@ pub enum BountyStatus{
     Cancelled,
 }
 
-//Bounty record recorded on Blockchain String
+// Stores the information for a single bounty on Solana.
+
+
 #[account]
 #[derive(InitSpace)]
-
-//Bounty class
-pub struct Bounty{
-    //Wallet created for the bounty
+pub struct Bounty {
+    // Wallet address of the person who created the bounty
     pub creator: Pubkey,
 
-    //Wallet that accepts the bounty
+    // Wallet address of the assigned worker (None if unclaimed)
     pub worker: Option<Pubkey>,
 
-    //Unique ID for creator's bounty
+    // Unique identifier for a creator's bounty
     pub bounty_id: u64,
 
-    //Reward in Lamports of Solana currency
+    // Proposed payment amount in lamports (1 SOL = 1 billion lamports)
     pub reward_lamports: u64,
 
-    //Max title length: 64 bits
+    // Short job title (maximum 64 bytes)
     #[max_len(64)]
     pub title: String,
 
-    //Reference to job description
+    // Reference to the full job description (maximum 200 bytes)
     #[max_len(200)]
     pub description_ref: String,
 
-    //Deadline of the bounty as a timestamp
+    // Job deadline stored as a Unix timestamp
     pub deadline: i64,
 
-    //Current state of bounty
+    // Current stage of the bounty
     pub status: BountyStatus,
 
-    //Reference to submitted work
+    // Reference to submitted work (None until work is submitted)
     #[max_len(200)]
     pub submission_ref: Option<String>,
-
-
 }
 
-//Accounts needed to create bounty
-#[derive(Accounts)]
-#[instruction(bounty_id:u64)]
+// Defines the accounts required to create a new bounty.
 
+#[derive(Accounts)]
+#[instruction(bounty_id: u64)]
 pub struct CreateBounty<'info> {
+    // Create a new bounty account at a deterministic PDA address
     #[account(
         init,
         payer = creator,
@@ -78,41 +76,43 @@ pub struct CreateBounty<'info> {
     )]
     pub bounty: Account<'info, Bounty>,
 
+    // Creator signs the transaction and pays for account storage
     #[account(mut)]
     pub creator: Signer<'info>,
 
+    // Solana's System Program is used to create the account
     pub system_program: Program<'info, System>,
 }
 
+// Validates inputs and initializes a new bounty account.
 
-//Logic for creating the bounty
+
 pub fn handler(
     ctx: Context<CreateBounty>,
-    bounty_id:u64,
-    title:String,
+    bounty_id: u64,
+    title: String,
     description_ref: String,
     reward_lamports: u64,
     deadline: i64,
 ) -> Result<()> {
-    //Reject invalid input for title
+    // Validate the title and description reference
     require!(
         !title.is_empty() && title.len() <= 64,
         ErrorCode::InvalidTitle
     );
 
-    //Rewards for the job is above 0 lamports
-    require!(
-        reward_lamports >0,
-        ErrorCode::InvalidReward
-    );
-
-    //Description cannot be empty or more then 200 
     require!(
         !description_ref.is_empty() && description_ref.len() <= 200,
         ErrorCode::InvalidDescription
     );
 
-    //Deadline has to be in the future 
+    // Require a positive proposed reward
+    require!(
+        reward_lamports > 0,
+        ErrorCode::InvalidReward
+    );
+
+    // The deadline must be later than the blockchain's current time
     let current_time = Clock::get()?.unix_timestamp;
 
     require!(
@@ -120,25 +120,63 @@ pub fn handler(
         ErrorCode::InvalidDeadline
     );
 
-    //Access the newly created bounty
+    // Initialize the new bounty's fields
     let bounty = &mut ctx.accounts.bounty;
 
-    //Storing starting variables in the bounty
     bounty.creator = ctx.accounts.creator.key();
     bounty.worker = None;
     bounty.bounty_id = bounty_id;
-    bounty.title = title;
     bounty.reward_lamports = reward_lamports;
+    bounty.title = title;
     bounty.description_ref = description_ref;
     bounty.deadline = deadline;
     bounty.status = BountyStatus::Open;
     bounty.submission_ref = None;
 
-
-    msg!("Bounty has been created succcessfully!");
+    msg!("Bounty created successfully!");
 
     Ok(())
 }
 
 
-    
+// Functions that manage a bounty's state and business rules
+
+impl Bounty {
+    // Returns true if the bounty is open, unclaimed, and not expired
+    pub fn is_available(&self, current_time: i64) -> bool {
+        self.status == BountyStatus::Open
+            && self.worker.is_none()
+            && current_time < self.deadline
+    }
+
+    // Assigns a worker to an available bounty
+    pub fn accept(
+        &mut self,
+        worker: Pubkey,
+        current_time: i64,
+    ) -> Result<()> {
+        // Only open, unclaimed bounties can be accepted
+        require!(
+            self.status == BountyStatus::Open && self.worker.is_none(),
+            ErrorCode::BountyNotOpen
+        );
+
+        // Expired bounties cannot be accepted
+        require!(
+            current_time < self.deadline,
+            ErrorCode::BountyExpired
+        );
+
+        // The creator cannot accept their own bounty
+        require!(
+            worker != self.creator,
+            ErrorCode::CannotAcceptOwnBounty
+        );
+
+        // Assign the worker and move to the Accepted state
+        self.worker = Some(worker);
+        self.status = BountyStatus::Accepted;
+
+        Ok(())
+    }
+}

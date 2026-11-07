@@ -19,6 +19,15 @@ pub enum ErrorCode {
     #[msg("Deadline must be in the future")]
     InvalidDeadline,
 
+    #[msg("Bounty is not open")]
+    BountyNotOpen,
+
+    #[msg("Bounty deadline has passed")]
+    BountyExpired,
+
+    #[msg("Creator cannot accept their own bounty")]
+    CannotAcceptOwnBounty,
+
     }
 
  

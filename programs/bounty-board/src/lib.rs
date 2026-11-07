@@ -3,6 +3,7 @@ pub mod error;
 pub mod instructions;
 pub mod state;
 pub mod bounty;
+pub mod accept_bounty;
 
 use anchor_lang::prelude::*;
 
@@ -10,6 +11,8 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 pub use bounty::*;
+pub use accept_bounty::*;
+
 
 declare_id!("DorphgTj2n5swnnt53Edymkds7P1MDjoKfQRRNC79weT");
 
@@ -42,5 +45,12 @@ pub mod bounty_board {
             reward_lamports,
             deadline,
         )
+    }
+
+    //Fn for accepting bounty
+    pub fn accept_bounty(
+        ctx: Context<AcceptBounty>,
+    ) -> Result <()> {
+        crate::accept_bounty::handler(ctx)
     }
 }
