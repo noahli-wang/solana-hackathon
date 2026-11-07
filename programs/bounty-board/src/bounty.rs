@@ -180,3 +180,4 @@ impl Bounty {
         Ok(())
     }
 }
+
