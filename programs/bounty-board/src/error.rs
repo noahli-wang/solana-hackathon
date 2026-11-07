@@ -28,6 +28,14 @@ pub enum ErrorCode {
     #[msg("Creator cannot accept their own bounty")]
     CannotAcceptOwnBounty,
 
+    #[msg("Bounty not in the right status for this action")]
+    InvalidStatus,
+
+    #[msg("Only the creator of bounty can perform this action")]
+    NotBountyCreator,
+
+
+
     }
 
  

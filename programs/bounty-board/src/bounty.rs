@@ -179,5 +179,35 @@ impl Bounty {
 
         Ok(())
     }
-}
 
+    //creator approves work (called by approve_bounty.rs) and sets the status to approved if the bounty is submitted and the deadline has not passed
+    pub fn complete(&mut self) -> Result<()>{
+        
+        //can only approve a bounty after the worker has submitted
+        require!(
+            self.status == BountyStatus::Submitted,
+            ErrorCode::InvalidStatus
+        );
+        
+        self.status = BountyStatus::Completed;//bounty status set to complete
+
+        Ok(())
+
+    }
+
+    //the creator cancels the bounty
+    pub fn cancel(@mut self) -> Result<()>{
+        //can only cancel the bounty when no one has accepted the job and the deadline has not passed
+        require!(
+            self.status == BountyStatus::Open, 
+            ErrorCode::InvalidStatus
+        );
+
+        self.status = BountyStatus::Cancelled;//bounty status set to cancelled
+
+        Ok(())
+    }
+
+
+
+}
