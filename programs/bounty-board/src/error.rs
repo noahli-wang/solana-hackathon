@@ -12,4 +12,13 @@ pub enum ErrorCode {
 
     #[msg("Reward must be greater than zero")]
     InvalidReward,
+
+    #[msg("Invalid description reference")]
+    InvalidDescription,
+
+    #[msg("Deadline must be in the future")]
+    InvalidDeadline,
+
     }
+
+ 

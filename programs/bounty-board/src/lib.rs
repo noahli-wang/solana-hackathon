@@ -25,17 +25,22 @@ pub mod bounty_board {
         crate::instructions::increment::handle_increment(ctx)
     }
 
+    
     pub fn create_bounty(
         ctx: Context<CreateBounty>,
-        bounty_id:u64,
-        title:String,
-        reward_lamports:u64,
+        bounty_id: u64,
+        title: String,
+        description_ref: String,
+        reward_lamports: u64,
+        deadline: i64,
     ) -> Result<()> {
         crate::bounty::handler(
             ctx,
             bounty_id,
             title,
+            description_ref,
             reward_lamports,
+            deadline,
         )
     }
 }
