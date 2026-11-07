@@ -179,5 +179,42 @@ impl Bounty {
 
         Ok(())
     }
-}
 
+    //Allows assigned worker to complete work
+    pub fn submit_work(
+        &mut self,
+        worker: Pubkey,
+        submission_ref:String,
+        current_time: i64,
+    ) -> Result <()>  {
+        //Bounty must be currently accepted
+        require!(
+            self.status == BountyStatus::Accepted,
+            ErrorCode::BountyNotAccepted
+        );
+
+        //Only assigned worker can submit
+        require!(
+            self.worker== Some(worker),
+            ErrorCode::UnauthorizedWorker
+        );
+
+        //Sub ref must be valid
+        require!(
+            !submission_ref.is_empty() && submission_ref.len() <= 200,
+            ErrorCode::InvalidSubmission
+        );
+
+        //No submissions after deadline
+        require!(
+            current_time < self.deadline,
+            ErrorCode::BountyExpired
+        );
+
+        //If passes all conditions, submits and update status
+        self.submission_ref = Some(submission_ref);
+        self.status= BountyStatus::Submitted;
+
+        Ok(())
+    }
+}

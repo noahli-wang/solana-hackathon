@@ -4,6 +4,7 @@ pub mod instructions;
 pub mod state;
 pub mod bounty;
 pub mod accept_bounty;
+pub mod submit_work;
 
 use anchor_lang::prelude::*;
 
@@ -12,7 +13,7 @@ pub use instructions::*;
 pub use state::*;
 pub use bounty::*;
 pub use accept_bounty::*;
-
+pub use submit_work::*;
 
 declare_id!("DorphgTj2n5swnnt53Edymkds7P1MDjoKfQRRNC79weT");
 
@@ -52,5 +53,13 @@ pub mod bounty_board {
         ctx: Context<AcceptBounty>,
     ) -> Result <()> {
         crate::accept_bounty::handler(ctx)
+    }
+
+    //Fn for submitting work
+    pub fn submit_work(
+        ctx: Context<SubmitWork>,
+        submission_ref:String,
+    ) -> Result <()>{
+        crate::submit_work::handler(ctx, submission_ref)
     }
 }

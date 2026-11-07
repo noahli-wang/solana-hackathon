@@ -28,6 +28,14 @@ pub enum ErrorCode {
     #[msg("Creator cannot accept their own bounty")]
     CannotAcceptOwnBounty,
 
+    #[msg("Bounty mustbe accepted before submitting work")]
+    BountyNotAccepted,
+
+    #[msg("Only assigned worker can submit work")]
+    UnauthorizedWorker,
+
+    #[msg("Invalid submission reference")]
+    InvalidSubmission,
     }
 
  
