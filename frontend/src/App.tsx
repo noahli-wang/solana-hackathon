@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Layout from "./components/Layout";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import BookmarksPage from "./pages/BookmarksPage/BookmarksPage.tsx";
+import MyBountiesPage from "./pages/MyBountiesPage/MyBountiesPage";
 
 type Page = "browse" | "bookmarks" | "my-bounties" | "settings";
 
@@ -81,16 +82,6 @@ function App() {
           />
         );
 
-      case "my-bounties":
-        return (
-          <main className="browse-page">
-            <h1 style={{ color: "#1f2937" }}>
-              My Bounties
-            </h1>
-            <p>Your created and accepted jobs will appear here.</p>
-          </main>
-        );
-
       case "settings":
         return (
           <main className="browse-page">
@@ -99,6 +90,11 @@ function App() {
             </h1>
             <p>Settings will be available soon.</p>
           </main>
+        );
+      
+      case "my-bounties":
+        return(
+          <MyBountiesPage />
         );
     }
   }
