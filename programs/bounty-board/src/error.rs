@@ -1,12 +1,16 @@
+
 use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
+    // Starter counter errors
     #[msg("Only the counter authority can update this counter")]
     Unauthorized,
+
     #[msg("Counter has reached the maximum value")]
     CounterOverflow,
 
+    // Bounty creation errors
     #[msg("Title must contain between 1 and 64 bytes")]
     InvalidTitle,
 
@@ -19,6 +23,7 @@ pub enum ErrorCode {
     #[msg("Deadline must be in the future")]
     InvalidDeadline,
 
+    // Bounty acceptance errors
     #[msg("Bounty is not open")]
     BountyNotOpen,
 
@@ -28,45 +33,38 @@ pub enum ErrorCode {
     #[msg("Creator cannot accept their own bounty")]
     CannotAcceptOwnBounty,
 
-<<<<<<< HEAD
-    #[msg("Bounty not in the right status for this action")]
+    // General bounty permission and status errors
+    #[msg("Bounty is not in the right status for this action")]
     InvalidStatus,
 
-    #[msg("Only the creator of bounty can perform this action")]
+    #[msg("Only the creator of the bounty can perform this action")]
     NotBountyCreator,
 
-
-
-=======
-    #[msg("Bounty mustbe accepted before submitting work")]
-    BountyNotAccepted,
-
-    #[msg("Only assigned worker can submit work")]
-    UnauthorizedWorker,
-
-    #[msg("Invalid submission reference")]
-    InvalidSubmission,
     #[msg("Only the bounty creator can do this")]
     NotCreator,
 
     #[msg("Only the assigned worker can do this")]
     WrongWorker,
 
-    #[msg("Bounty is not in the Accepted state")]
+    // Work submission errors
+    #[msg("Bounty must be accepted before submitting work")]
     BountyNotAccepted,
 
-    #[msg("Work has not been submitted yet")]
-    WorkNotSubmitted,
+    #[msg("Only the assigned worker can submit work")]
+    UnauthorizedWorker,
 
     #[msg("Submission reference must contain between 1 and 200 bytes")]
     InvalidSubmission,
 
-    #[msg("Bounty can only be cancelled while being open, or after the deadline if the work has not been submitted")]
+    // Approval errors
+    #[msg("Work has not been submitted yet")]
+    WorkNotSubmitted,
+
+    // Cancellation errors
+    #[msg("Bounty can only be cancelled while open, or after the deadline if work has not been submitted")]
     CannotCancel,
 
+    // Escrow errors
     #[msg("Bounty account does not hold enough lamports to pay the reward")]
-    InsufficientEscrow
->>>>>>> 3b30a9fa43651fb553e2a3d5037d3d6c9179b079
-    }
-
- 
+    InsufficientEscrow,
+}
