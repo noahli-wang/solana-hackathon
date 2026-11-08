@@ -112,6 +112,12 @@ pub fn handler(
         ErrorCode::InvalidReward
     );
 
+    // Creator of Bounty has lamparts
+    require!(
+        ctx.accounts.creator.to_account_info().lamports() >= reward_lamports,
+        ErrorCode::InsufficientEscrow
+    );
+
     // The deadline must be later than the blockchain's current time
     let current_time = Clock::get()?.unix_timestamp;
 
@@ -120,6 +126,17 @@ pub fn handler(
         ErrorCode::InvalidDeadline
     );
 
+    // Escrow: Creating a Transfer type that will hold some context for the system
+    // to use to transfer successfully
+    let cpi_accounts = anchor_lang::system_program::Transfer {
+        from : ctx.accounts.creator.to_account_info(),
+        to : ctx.accounts.bounty.to_account_info(),
+    };
+
+    let cpi_ctx = CpiContext::new(anchor_lang::system_program::ID, cpi_accounts);
+    anchor_lang::system_program::transfer(cpi_ctx, reward_lamports)?;
+
+    
     // Initialize the new bounty's fields
     let bounty = &mut ctx.accounts.bounty;
 
@@ -180,6 +197,7 @@ impl Bounty {
         Ok(())
     }
 
+<<<<<<< HEAD
     //creator approves work (called by approve_bounty.rs) and sets the status to approved if the bounty is submitted and the deadline has not passed
     pub fn complete(&mut self) -> Result<()>{
         
@@ -210,4 +228,43 @@ impl Bounty {
 
 
 
+=======
+    //Allows assigned worker to complete work
+    pub fn submit_work(
+        &mut self,
+        worker: Pubkey,
+        submission_ref:String,
+        current_time: i64,
+    ) -> Result <()>  {
+        //Bounty must be currently accepted
+        require!(
+            self.status == BountyStatus::Accepted,
+            ErrorCode::BountyNotAccepted
+        );
+
+        //Only assigned worker can submit
+        require!(
+            self.worker== Some(worker),
+            ErrorCode::UnauthorizedWorker
+        );
+
+        //Sub ref must be valid
+        require!(
+            !submission_ref.is_empty() && submission_ref.len() <= 200,
+            ErrorCode::InvalidSubmission
+        );
+
+        //No submissions after deadline
+        require!(
+            current_time < self.deadline,
+            ErrorCode::BountyExpired
+        );
+
+        //If passes all conditions, submits and update status
+        self.submission_ref = Some(submission_ref);
+        self.status= BountyStatus::Submitted;
+
+        Ok(())
+    }
+>>>>>>> 3b30a9fa43651fb553e2a3d5037d3d6c9179b079
 }
