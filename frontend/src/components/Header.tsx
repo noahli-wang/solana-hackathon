@@ -1,7 +1,10 @@
 
-import { Layers3, Wallet } from "lucide-react";
+import { Layers3 } from "lucide-react";
+
+import WalletButton from "./WalletButton";
 import "./Layout.css";
 
+// Shared navigation header for BountyBoard.
 export default function Header() {
   return (
     <header className="app-header">
@@ -13,10 +16,7 @@ export default function Header() {
         <span>BountyBoard</span>
       </div>
 
-      <button className="wallet-button" type="button" disabled>
-        <Wallet size={18} />
-        Connect Wallet
-      </button>
+      <WalletButton />
     </header>
   );
 }
