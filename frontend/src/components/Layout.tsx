@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import type { ReactNode } from "react";
 
 import Header from "./Header";
@@ -8,11 +7,15 @@ import "./Layout.css";
 
 interface LayoutProps {
   children: ReactNode;
+  activePage: string;
+  onNavigate: (page: string) => void;
 }
 
-export default function Layout({ children }: LayoutProps) {
-  const [activePage, setActivePage] = useState("browse");
-
+export default function Layout({
+  children,
+  activePage,
+  onNavigate,
+}: LayoutProps) {
   return (
     <div className="app-layout">
       <Header />
@@ -20,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className="app-body">
         <Sidebar
           activePage={activePage}
-          onNavigate={setActivePage}
+          onNavigate={onNavigate}
         />
 
         <div className="page-content">

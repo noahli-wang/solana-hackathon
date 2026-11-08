@@ -1,3 +1,4 @@
+
 import BountyDescPage from "../BountyDescPage/BountyDescPage";
 import { useState } from "react";
 import {
@@ -23,13 +24,25 @@ type SortOption =
   | "reward-low"
   | "deadline";
 
+interface BrowsePageProps {
+  bookmarks: Set<string>;
+  onBookmark: (id: string) => void;
+  bookmarksOnly?: boolean;
+}
+
 const PAGE_SIZE = 4;
 
-export default function BrowsePage() {
+export default function BrowsePage({
+  bookmarks,
+  onBookmark,
+  bookmarksOnly = false,
+}: BrowsePageProps) {
+  const defaultStatus: StatusFilter = bookmarksOnly ? "All" : "Open";
+
   // Search, status, sorting and tag filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>("Open");
+    useState<StatusFilter>(defaultStatus);
   const [sortBy, setSortBy] =
     useState<SortOption>("newest");
 
@@ -41,10 +54,7 @@ export default function BrowsePage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Bookmarks and temporary bounty details
-  const [bookmarks, setBookmarks] =
-    useState<Set<string>>(new Set());
-
+  // Selected bounty opens the existing details page
   const [selectedBounty, setSelectedBounty] =
     useState<Bounty | null>(null);
 
@@ -69,25 +79,10 @@ export default function BrowsePage() {
     setCurrentPage(1);
   }
 
-  // Bookmark or unbookmark a bounty
-  function toggleBookmark(id: string) {
-    setBookmarks((previous) => {
-      const next = new Set(previous);
-
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-
-      return next;
-    });
-  }
-
-  // Return to default Browse page filters
+  // Return to default filters
   function clearFilters() {
     setSearch("");
-    setStatusFilter("Open");
+    setStatusFilter(defaultStatus);
     setSortBy("newest");
     setSelectedTags([]);
     setTagSearch("");
@@ -95,9 +90,13 @@ export default function BrowsePage() {
     setCurrentPage(1);
   }
 
-  // Apply search, status and selected tag filters
+  // Filter by bookmarks, search, status, tags, and deadline
   const filteredBounties = mockBounties
     .filter((bounty) => {
+      if (bookmarksOnly && !bookmarks.has(bounty.id)) {
+        return false;
+      }
+
       const query = search.trim().toLowerCase();
 
       const matchesSearch =
@@ -111,14 +110,14 @@ export default function BrowsePage() {
         statusFilter === "All" ||
         bounty.status === statusFilter;
 
-      // Match any selected tag (OR filtering)
+      // OR filtering: match any selected tag
       const matchesTags =
         selectedTags.length === 0 ||
         selectedTags.some((tag) =>
           bounty.tags.includes(tag)
         );
 
-      // Don't show expired Open bounties as available
+      // Open bounties past their deadline are unavailable
       const isExpired =
         bounty.deadline <= Math.floor(Date.now() / 1000);
 
@@ -153,10 +152,15 @@ export default function BrowsePage() {
 
         case "newest":
         default:
-          // Temporary mock data ordering
+          // Mock IDs temporarily represent creation order
           return Number(b.id) - Number(a.id);
       }
     });
+
+  // Total saved bounties (regardless of active filters)
+  const savedCount = mockBounties.filter((bounty) =>
+    bookmarks.has(bounty.id)
+  ).length;
 
   // Calculate pagination
   const totalPages = Math.max(
@@ -164,17 +168,22 @@ export default function BrowsePage() {
     Math.ceil(filteredBounties.length / PAGE_SIZE)
   );
 
+  // Prevent empty pages when bookmarks are removed
+  const safePage = Math.min(currentPage, totalPages);
+
   const visibleBounties = filteredBounties.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
   );
+
+  // Preserve the existing dedicated bounty details page
   if (selectedBounty) {
     return (
       <BountyDescPage
         key={selectedBounty.id}
         bounty={selectedBounty}
         isBookmarked={bookmarks.has(selectedBounty.id)}
-        onBookmark={toggleBookmark}
+        onBookmark={onBookmark}
         onBack={() => setSelectedBounty(null)}
       />
     );
@@ -184,294 +193,343 @@ export default function BrowsePage() {
     <main className="browse-page">
       {/* Page heading */}
       <header className="browse-heading">
-        <h1>Browse Bounties</h1>
-        <p>Discover opportunities on Solana.</p>
+        <h1>
+          {bookmarksOnly
+            ? "My Bookmarks"
+            : "Browse Bounties"}
+        </h1>
+
+        <p>
+          {bookmarksOnly
+            ? "Bounties you've saved for later."
+            : "Discover opportunities on Solana."}
+        </p>
       </header>
 
-      {/* Search and filter controls */}
-      <section className="browse-controls">
-        <label className="search-container">
-          <Search size={20} />
+      {/* Empty bookmarks state */}
+      {bookmarksOnly && savedCount === 0 ? (
+        <div className="empty-state">
+          <h2>No bookmarked bounties yet</h2>
+          <p>
+            Save bounties using the bookmark icon on
+            the Browse page.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Search and filter controls */}
+          <section className="browse-controls">
+            <label className="search-container">
+              <Search size={20} />
 
-          <input
-            type="search"
-            aria-label="Search bounties"
-            placeholder="Search by title, description, or tag..."
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setCurrentPage(1);
-            }}
-          />
-        </label>
-
-        <div className="filter-row">
-          {/* Status dropdown */}
-          <label className="filter-group">
-            <span>Status</span>
-
-            <select
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(
-                  event.target.value as StatusFilter
-                );
-                setCurrentPage(1);
-              }}
-            >
-              <option value="Open">Available Jobs</option>
-              <option value="All">All Statuses</option>
-              <option value="Accepted">Accepted</option>
-              <option value="Submitted">Submitted</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </label>
-
-          {/* Sorting dropdown */}
-          <label className="filter-group">
-            <span>Sort By</span>
-
-            <select
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value as SortOption);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="newest">Newest Added</option>
-              <option value="reward-high">Highest Reward</option>
-              <option value="reward-low">Lowest Reward</option>
-              <option value="deadline">Deadline Soonest</option>
-            </select>
-          </label>
-
-          {/* Tag multi-select dropdown */}
-          <div className="tag-dropdown-container">
-            <span className="tag-dropdown-label">
-              Tags
-            </span>
-
-            <button
-              type="button"
-              className="tag-dropdown-trigger"
-              aria-expanded={tagsOpen}
-              aria-controls="tag-dropdown-options"
-              onClick={() => setTagsOpen(!tagsOpen)}
-            >
-              <Tags size={17} />
-
-              <span>
-                {selectedTags.length > 0
-                  ? `${selectedTags.length} tags selected`
-                  : "All Tags"}
-              </span>
-
-              <ChevronDown
-                size={17}
-                className={tagsOpen ? "chevron-open" : ""}
+              <input
+                type="search"
+                aria-label="Search bounties"
+                placeholder={
+                  bookmarksOnly
+                    ? "Search saved bounties..."
+                    : "Search by title, description, or tag..."
+                }
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setCurrentPage(1);
+                }}
               />
-            </button>
+            </label>
 
-            {tagsOpen && (
-              <div
-                id="tag-dropdown-options"
-                className="tag-dropdown-menu"
-              >
-                {/* Search inside dropdown */}
-                <div className="tag-search-container">
-                  <Search size={16} />
+            <div className="filter-row">
+              {/* Status dropdown */}
+              <label className="filter-group">
+                <span>Status</span>
 
-                  <input
-                    type="search"
-                    aria-label="Search tags"
-                    placeholder="Search tags..."
-                    value={tagSearch}
-                    onChange={(event) =>
-                      setTagSearch(event.target.value)
+                <select
+                  value={statusFilter}
+                  onChange={(event) => {
+                    setStatusFilter(
+                      event.target.value as StatusFilter
+                    );
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="Open">
+                    Available Jobs
+                  </option>
+                  <option value="All">
+                    All Statuses
+                  </option>
+                  <option value="Accepted">
+                    Accepted
+                  </option>
+                  <option value="Submitted">
+                    Submitted
+                  </option>
+                  <option value="Completed">
+                    Completed
+                  </option>
+                  <option value="Cancelled">
+                    Cancelled
+                  </option>
+                </select>
+              </label>
+
+              {/* Sorting dropdown */}
+              <label className="filter-group">
+                <span>Sort By</span>
+
+                <select
+                  value={sortBy}
+                  onChange={(event) => {
+                    setSortBy(
+                      event.target.value as SortOption
+                    );
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="newest">
+                    Newest Added
+                  </option>
+                  <option value="reward-high">
+                    Highest Reward
+                  </option>
+                  <option value="reward-low">
+                    Lowest Reward
+                  </option>
+                  <option value="deadline">
+                    Deadline Soonest
+                  </option>
+                </select>
+              </label>
+
+              {/* Tag dropdown */}
+              <div className="tag-dropdown-container">
+                <span className="tag-dropdown-label">
+                  Tags
+                </span>
+
+                <button
+                  type="button"
+                  className="tag-dropdown-trigger"
+                  aria-expanded={tagsOpen}
+                  aria-controls="tag-dropdown-options"
+                  onClick={() => setTagsOpen(!tagsOpen)}
+                >
+                  <Tags size={17} />
+
+                  <span>
+                    {selectedTags.length > 0
+                      ? `${selectedTags.length} tags selected`
+                      : "All Tags"}
+                  </span>
+
+                  <ChevronDown
+                    size={17}
+                    className={
+                      tagsOpen ? "chevron-open" : ""
                     }
                   />
-                </div>
+                </button>
 
-                {/* Checkbox list */}
-                <div className="tag-dropdown-options">
-                  {visibleTags.length > 0 ? (
-                    visibleTags.map((tag) => (
-                      <label
-                        key={tag}
-                        className="tag-dropdown-option"
+                {tagsOpen && (
+                  <div
+                    id="tag-dropdown-options"
+                    className="tag-dropdown-menu"
+                  >
+                    {/* Search inside dropdown */}
+                    <div className="tag-search-container">
+                      <Search size={16} />
+
+                      <input
+                        type="search"
+                        aria-label="Search tags"
+                        placeholder="Search tags..."
+                        value={tagSearch}
+                        onChange={(event) =>
+                          setTagSearch(event.target.value)
+                        }
+                      />
+                    </div>
+
+                    {/* Tag checkbox list */}
+                    <div className="tag-dropdown-options">
+                      {visibleTags.length > 0 ? (
+                        visibleTags.map((tag) => (
+                          <label
+                            key={tag}
+                            className="tag-dropdown-option"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedTags.includes(tag)}
+                              onChange={() => toggleTag(tag)}
+                            />
+
+                            <span>{tag}</span>
+                          </label>
+                        ))
+                      ) : (
+                        <p className="no-tags-found">
+                          No matching tags.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Dropdown footer */}
+                    <div className="tag-dropdown-footer">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTags([]);
+                          setCurrentPage(1);
+                        }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedTags.includes(tag)}
-                          onChange={() => toggleTag(tag)}
-                        />
+                        Clear All
+                      </button>
 
-                        <span>{tag}</span>
-                      </label>
-                    ))
-                  ) : (
-                    <p className="no-tags-found">
-                      No matching tags.
-                    </p>
-                  )}
-                </div>
+                      <button
+                        type="button"
+                        className="tag-done-button"
+                        onClick={() => setTagsOpen(false)}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-                {/* Dropdown actions */}
-                <div className="tag-dropdown-footer">
+            {/* Selected tag chips */}
+            {selectedTags.length > 0 && (
+              <div className="selected-tag-list">
+                <span className="selected-tags-label">
+                  Active tags:
+                </span>
+
+                {selectedTags.map((tag) => (
                   <button
+                    key={tag}
                     type="button"
-                    onClick={() => {
-                      setSelectedTags([]);
-                      setCurrentPage(1);
-                    }}
+                    className="selected-tag-chip"
+                    onClick={() => toggleTag(tag)}
+                    aria-label={`Remove ${tag} filter`}
                   >
-                    Clear All
+                    {tag}
+                    <X size={13} />
                   </button>
-
-                  <button
-                    type="button"
-                    className="tag-done-button"
-                    onClick={() => setTagsOpen(false)}
-                  >
-                    Done
-                  </button>
-                </div>
+                ))}
               </div>
             )}
-          </div>
-        </div>
+          </section>
 
-        {/* Selected tag chips */}
-        {selectedTags.length > 0 && (
-          <div className="selected-tag-list">
-            <span className="selected-tags-label">
-              Active tags:
+          {/* Results count */}
+          <div className="results-header">
+            <span>
+              {filteredBounties.length}{" "}
+              {filteredBounties.length === 1
+                ? "bounty"
+                : "bounties"}{" "}
+              found
             </span>
 
-            {selectedTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                className="selected-tag-chip"
-                onClick={() => toggleTag(tag)}
-                aria-label={`Remove ${tag} filter`}
-              >
-                {tag}
-                <X size={13} />
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Results count and reset button */}
-      <div className="results-header">
-        <span>
-          {filteredBounties.length}{" "}
-          {filteredBounties.length === 1
-            ? "bounty"
-            : "bounties"}{" "}
-          found
-        </span>
-
-        <button
-          type="button"
-          className="reset-filters-button"
-          onClick={clearFilters}
-        >
-          <RotateCcw size={15} />
-          Reset Filters
-        </button>
-      </div>
-
-      {/* Bounty cards */}
-      {visibleBounties.length > 0 ? (
-        <section
-          className="bounty-grid"
-          aria-label="Bounty listings"
-        >
-          {visibleBounties.map((bounty) => (
-            <BountyCard
-              key={bounty.id}
-              bounty={bounty}
-              isBookmarked={bookmarks.has(bounty.id)}
-              onBookmark={toggleBookmark}
-              onViewDetails={setSelectedBounty}
-              onTagClick={(tag) => {
-                if (!selectedTags.includes(tag)) {
-                  toggleTag(tag);
-                }
-              }}
-            />
-          ))}
-        </section>
-      ) : (
-        <div className="empty-state">
-          <Search size={36} />
-
-          <h2>No bounties found</h2>
-          <p>Try changing your search or filters.</p>
-
-          <button type="button" onClick={clearFilters}>
-            Reset Filters
-          </button>
-        </div>
-      )}
-
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <nav
-          className="pagination"
-          aria-label="Bounty pages"
-        >
-          <button
-            type="button"
-            disabled={currentPage === 1}
-            onClick={() =>
-              setCurrentPage((page) => page - 1)
-            }
-          >
-            <ChevronLeft size={17} />
-            Previous
-          </button>
-
-          {Array.from(
-            { length: totalPages },
-            (_, index) => index + 1
-          ).map((pageNumber) => (
             <button
-              key={pageNumber}
               type="button"
-              className={
-                currentPage === pageNumber
-                  ? "active-page"
-                  : ""
-              }
-              aria-current={
-                currentPage === pageNumber
-                  ? "page"
-                  : undefined
-              }
-              onClick={() =>
-                setCurrentPage(pageNumber)
-              }
+              className="reset-filters-button"
+              onClick={clearFilters}
             >
-              {pageNumber}
+              <RotateCcw size={15} />
+              Reset Filters
             </button>
-          ))}
+          </div>
 
-          <button
-            type="button"
-            disabled={currentPage === totalPages}
-            onClick={() =>
-              setCurrentPage((page) => page + 1)
-            }
-          >
-            Next
-            <ChevronRight size={17} />
-          </button>
-        </nav>
+          {/* Bounty cards */}
+          {visibleBounties.length > 0 ? (
+            <section
+              className="bounty-grid"
+              aria-label="Bounty listings"
+            >
+              {visibleBounties.map((bounty) => (
+                <BountyCard
+                  key={bounty.id}
+                  bounty={bounty}
+                  isBookmarked={bookmarks.has(bounty.id)}
+                  onBookmark={onBookmark}
+                  onViewDetails={setSelectedBounty}
+                  onTagClick={(tag) => {
+                    if (!selectedTags.includes(tag)) {
+                      toggleTag(tag);
+                    }
+                  }}
+                />
+              ))}
+            </section>
+          ) : (
+            <div className="empty-state">
+              <Search size={36} />
+              <h2>No matching bounties</h2>
+              <p>Try changing your search or filters.</p>
+
+              <button type="button" onClick={clearFilters}>
+                Reset Filters
+              </button>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <nav
+              className="pagination"
+              aria-label="Bounty pages"
+            >
+              <button
+                type="button"
+                disabled={safePage === 1}
+                onClick={() =>
+                  setCurrentPage(safePage - 1)
+                }
+              >
+                <ChevronLeft size={17} />
+                Previous
+              </button>
+
+              {Array.from(
+                { length: totalPages },
+                (_, index) => index + 1
+              ).map((pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  className={
+                    safePage === pageNumber
+                      ? "active-page"
+                      : ""
+                  }
+                  aria-current={
+                    safePage === pageNumber
+                      ? "page"
+                      : undefined
+                  }
+                  onClick={() =>
+                    setCurrentPage(pageNumber)
+                  }
+                >
+                  {pageNumber}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                disabled={safePage === totalPages}
+                onClick={() =>
+                  setCurrentPage(safePage + 1)
+                }
+              >
+                Next
+                <ChevronRight size={17} />
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </main>
   );
