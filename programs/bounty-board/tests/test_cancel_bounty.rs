@@ -20,6 +20,9 @@ fn send_instruction(
     instruction: Instruction,
     payer: &Keypair,
 ) -> bool {
+    // New blockhash each time, so sending the same instruction twice is a real
+    // second attempt instead of being rejected as a duplicate transaction
+    svm.expire_blockhash();
     let blockhash = svm.latest_blockhash();
 
     let message = Message::new_with_blockhash(
@@ -128,6 +131,27 @@ fn cancel_bounty(svm: &mut LiteSVM, program_id: Pubkey, bounty: Pubkey, signer: 
     send_instruction(svm, instruction, signer)
 }
 
+const REWARD: u64 = 100_000_000; // same reward create_bounty uses
+
+#[test]
+fn test_cancel_refunds_creator_from_escrow() {
+    let (mut svm, program_id, creator, _worker, _stranger) = setup();
+    let bounty = create_bounty(&mut svm, program_id, &creator);
+
+    let creator_before = svm.get_balance(&creator.pubkey()).unwrap();
+    let escrow_before = svm.get_balance(&bounty).unwrap();
+
+    assert!(cancel_bounty(&mut svm, program_id, bounty, &creator));
+
+    // Escrow drops by exactly the reward...
+    assert_eq!(svm.get_balance(&bounty).unwrap(), escrow_before - REWARD);
+
+    // ...and the creator gets it back, minus the small transaction fee they paid
+    let creator_after = svm.get_balance(&creator.pubkey()).unwrap();
+    assert!(creator_after > creator_before + REWARD - 10_000);
+    assert!(creator_after <= creator_before + REWARD);
+}
+
 #[test]
 fn test_creator_can_cancel_open_bounty() {
     let (mut svm, program_id, creator, _worker, _stranger) = setup();
@@ -172,6 +196,8 @@ fn test_cannot_cancel_twice() {
 
     assert!(cancel_bounty(&mut svm, program_id, bounty, &creator));
 
-    // Already cancelled, so a second cancel must fail
+    // Already cancelled, so a second cancel must fail (no double refund)
+    let escrow_before = svm.get_balance(&bounty).unwrap();
     assert!(!cancel_bounty(&mut svm, program_id, bounty, &creator));
+    assert_eq!(svm.get_balance(&bounty).unwrap(), escrow_before);
 }
