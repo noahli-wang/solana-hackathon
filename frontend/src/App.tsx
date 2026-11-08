@@ -3,8 +3,13 @@ import { useEffect, useState } from "react";
 
 import Layout from "./components/Layout";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
+<<<<<<< HEAD
+import BookmarksPage from "./pages/BookmarksPage/BookmarksPage.tsx";
+import MyBountiesPage from "./pages/MyBountiesPage/MyBountiesPage";
+=======
 import BookmarksPage from "./pages/BookmarksPage/BookmarksPage";
 import BountyConnectionTest from "./components/BountyConnectionTest";
+>>>>>>> 2c6727aa2288056a9a7121492c1e0d2f07394eef
 
 type Page = "browse" | "bookmarks" | "my-bounties" | "settings";
 
@@ -92,6 +97,8 @@ function App() {
           />
         );
 
+<<<<<<< HEAD
+=======
       case "my-bounties":
         return (
           <div style={{ padding: "32px" }}>
@@ -102,6 +109,7 @@ function App() {
           </div>
         );
 
+>>>>>>> 2c6727aa2288056a9a7121492c1e0d2f07394eef
       case "settings":
         return (
           <div style={{ padding: "32px" }}>
@@ -109,9 +117,17 @@ function App() {
             <p>Account settings will appear here.</p>
           </div>
         );
+<<<<<<< HEAD
+      
+      case "my-bounties":
+        return(
+          <MyBountiesPage />
+        );
+=======
 
       default:
         return null;
+>>>>>>> 2c6727aa2288056a9a7121492c1e0d2f07394eef
     }
   }
 

@@ -1,0 +1,253 @@
+/* Page layout (same spacing as the Browse page) */
+.my-bounties-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 32px;
+  text-align: left;
+}
+
+/* Title on the left, Create Bounty button on the right */
+.my-bounties-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.create-bounty-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #7654d6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.create-bounty-button:hover {
+  opacity: 0.9;
+}
+
+.create-bounty-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.my-bounties-heading h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.my-bounties-heading p {
+  color: #6b7280;
+  margin: 0 0 30px;
+}
+
+/* Tabs */
+.tab-selector {
+  display: inline-flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.tab-button {
+  padding: 10px 22px;
+  background: white;
+  color: #1f2937;
+  border: none;
+  border-right: 1px solid #e5e7eb;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.tab-button:last-child {
+  border-right: none;
+}
+
+.tab-button:hover {
+  background: #f9fafb;
+}
+
+.tab-button.active {
+  background: #7654d6;
+  color: white;
+  font-weight: 600;
+}
+
+/* Two columns: cards on the left, summary on the right */
+.my-bounties-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .my-bounties-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Bounty cards */
+.my-bounty-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.my-bounty-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.my-bounty-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.my-bounty-card-header h3 {
+  margin: 0;
+  font-size: 17px;
+  color: #1f2937;
+}
+
+.my-bounty-description {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 10px 0 16px;
+}
+
+.my-bounty-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.my-bounty-meta {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.my-bounty-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.empty-message {
+  color: #6b7280;
+}
+
+/* Status badges */
+.mb-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mb-status-open { background: #dcfce7; color: #166534; }
+.mb-status-accepted { background: #dbeafe; color: #1e40af; }
+.mb-status-submitted { background: #fef3c7; color: #92400e; }
+.mb-status-completed { background: #ede9fe; color: #5b21b6; }
+.mb-status-cancelled { background: #f3f4f6; color: #6b7280; }
+
+/* Approve / Cancel buttons */
+.my-bounty-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.action-button.approve {
+  background: #7654d6;
+  color: white;
+  border: 1px solid #7654d6;
+}
+
+.action-button.cancel {
+  background: white;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+}
+
+.action-button:hover {
+  opacity: 0.85;
+}
+
+/* Right side boxes */
+.my-bounties-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.side-box {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.side-box h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #1f2937;
+  margin: 0 0 12px;
+}
+
+.summary-list,
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.summary-list li:last-child {
+  border-bottom: none;
+}
+
+.summary-list strong {
+  color: #1f2937;
+}
+
+.activity-list li {
+  font-size: 14px;
+  color: #6b7280;
+  padding: 8px 0 8px 14px;
+  border-left: 2px solid #e5e7eb;
+}
