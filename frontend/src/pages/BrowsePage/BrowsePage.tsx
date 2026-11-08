@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import BountyCard from "./BountyCard";
-import { mockBounties } from "../../data/mockBounties";
+import { useLiveBounties } from "../../hooks/useLiveBounties";
 import type { Bounty, BountyStatus } from "../../types/bounty";
 import "./BrowsePage.css";
 
@@ -39,36 +39,47 @@ export default function BrowsePage({
 }: BrowsePageProps) {
   const defaultStatus: StatusFilter = bookmarksOnly ? "All" : "Open";
 
-  // Search, status, sorting and tag filters
+  // Load real bounty accounts from Solana Devnet.
+  const {
+    bounties,
+    loading,
+    error,
+    refresh,
+  } = useLiveBounties();
+
+  // Search, status, sorting, and tag filters.
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<StatusFilter>(defaultStatus);
+
   const [sortBy, setSortBy] =
     useState<SortOption>("newest");
 
   const [selectedTags, setSelectedTags] =
     useState<string[]>([]);
+
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
 
-  // Pagination
+  // Pagination.
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Selected bounty opens the existing details page
+  // Selected bounty opens the existing details page.
   const [selectedBounty, setSelectedBounty] =
     useState<Bounty | null>(null);
 
-  // Generate a unique list of available tags
+  // Generate a unique list of available tags.
+  // Current on-chain bounty accounts don't store tags yet.
   const availableTags = [
-    ...new Set(mockBounties.flatMap((bounty) => bounty.tags)),
+    ...new Set(bounties.flatMap((bounty) => bounty.tags)),
   ].sort();
 
-  // Filter the tags displayed inside the dropdown
+  // Filter tags displayed inside the dropdown.
   const visibleTags = availableTags.filter((tag) =>
     tag.toLowerCase().includes(tagSearch.toLowerCase())
   );
 
-  // Select or deselect a tag
+  // Select or deselect a tag.
   function toggleTag(tag: string) {
     setSelectedTags((previous) =>
       previous.includes(tag)
@@ -79,7 +90,7 @@ export default function BrowsePage({
     setCurrentPage(1);
   }
 
-  // Return to default filters
+  // Return to default filters.
   function clearFilters() {
     setSearch("");
     setStatusFilter(defaultStatus);
@@ -90,8 +101,8 @@ export default function BrowsePage({
     setCurrentPage(1);
   }
 
-  // Filter by bookmarks, search, status, tags, and deadline
-  const filteredBounties = mockBounties
+  // Filter by bookmarks, search, status, tags, and deadline.
+  const filteredBounties = bounties
     .filter((bounty) => {
       if (bookmarksOnly && !bookmarks.has(bounty.id)) {
         return false;
@@ -110,14 +121,14 @@ export default function BrowsePage({
         statusFilter === "All" ||
         bounty.status === statusFilter;
 
-      // OR filtering: match any selected tag
+      // OR filtering: match any selected tag.
       const matchesTags =
         selectedTags.length === 0 ||
         selectedTags.some((tag) =>
           bounty.tags.includes(tag)
         );
 
-      // Open bounties past their deadline are unavailable
+      // Expired open bounties are not available.
       const isExpired =
         bounty.deadline <= Math.floor(Date.now() / 1000);
 
@@ -152,23 +163,24 @@ export default function BrowsePage({
 
         case "newest":
         default:
-          // Mock IDs temporarily represent creation order
-          return Number(b.id) - Number(a.id);
+          // Solana account addresses don't encode creation time.
+          // This provides a stable order until we track creation time.
+          return b.id.localeCompare(a.id);
       }
     });
 
-  // Total saved bounties (regardless of active filters)
-  const savedCount = mockBounties.filter((bounty) =>
+  // Total saved bounties, regardless of active filters.
+  const savedCount = bounties.filter((bounty) =>
     bookmarks.has(bounty.id)
   ).length;
 
-  // Calculate pagination
+  // Calculate pagination.
   const totalPages = Math.max(
     1,
     Math.ceil(filteredBounties.length / PAGE_SIZE)
   );
 
-  // Prevent empty pages when bookmarks are removed
+  // Prevent empty pages when bookmarks are removed.
   const safePage = Math.min(currentPage, totalPages);
 
   const visibleBounties = filteredBounties.slice(
@@ -176,7 +188,45 @@ export default function BrowsePage({
     safePage * PAGE_SIZE
   );
 
-  // Preserve the existing dedicated bounty details page
+  // Loading state.
+  if (loading) {
+    return (
+      <main className="browse-page">
+        <header className="browse-heading">
+          <h1>
+            {bookmarksOnly ? "My Bookmarks" : "Browse Bounties"}
+          </h1>
+          <p>Loading bounties from Solana Devnet...</p>
+        </header>
+      </main>
+    );
+  }
+
+  // Network or blockchain query error.
+  if (error) {
+    return (
+      <main className="browse-page">
+        <header className="browse-heading">
+          <h1>
+            {bookmarksOnly ? "My Bookmarks" : "Browse Bounties"}
+          </h1>
+          <p>Unable to load real bounty accounts.</p>
+        </header>
+
+        <div className="empty-state" role="alert">
+          <h2>Connection Failed</h2>
+          <p>{error}</p>
+
+          <button type="button" onClick={refresh}>
+            <RotateCcw size={16} />
+            Try Again
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // Preserve the existing dedicated bounty details page.
   if (selectedBounty) {
     return (
       <BountyDescPage
@@ -255,18 +305,23 @@ export default function BrowsePage({
                   <option value="Open">
                     Available Jobs
                   </option>
+
                   <option value="All">
                     All Statuses
                   </option>
+
                   <option value="Accepted">
                     Accepted
                   </option>
+
                   <option value="Submitted">
                     Submitted
                   </option>
+
                   <option value="Completed">
                     Completed
                   </option>
+
                   <option value="Cancelled">
                     Cancelled
                   </option>
@@ -289,12 +344,15 @@ export default function BrowsePage({
                   <option value="newest">
                     Newest Added
                   </option>
+
                   <option value="reward-high">
                     Highest Reward
                   </option>
+
                   <option value="reward-low">
                     Lowest Reward
                   </option>
+
                   <option value="deadline">
                     Deadline Soonest
                   </option>
@@ -466,12 +524,29 @@ export default function BrowsePage({
           ) : (
             <div className="empty-state">
               <Search size={36} />
-              <h2>No matching bounties</h2>
-              <p>Try changing your search or filters.</p>
 
-              <button type="button" onClick={clearFilters}>
-                Reset Filters
-              </button>
+              <h2>
+                {bounties.length === 0
+                  ? "No bounties on Devnet yet"
+                  : "No matching bounties"}
+              </h2>
+
+              <p>
+                {bounties.length === 0
+                  ? "No real bounty accounts have been created on Devnet yet."
+                  : "Try changing your search or filters."}
+              </p>
+
+              {bounties.length === 0 ? (
+                <button type="button" onClick={refresh}>
+                  <RotateCcw size={16} />
+                  Refresh Bounties
+                </button>
+              ) : (
+                <button type="button" onClick={clearFilters}>
+                  Reset Filters
+                </button>
+              )}
             </div>
           )}
 

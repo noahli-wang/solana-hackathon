@@ -1,16 +1,18 @@
 
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import "./polyfills";
+
+import React from "react";
+import ReactDOM from "react-dom/client";
 
 import App from "./App";
 import SolanaProvider from "./providers/SolanaProvider";
 
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
     <SolanaProvider>
       <App />
     </SolanaProvider>
-  </StrictMode>
+  </React.StrictMode>
 );
