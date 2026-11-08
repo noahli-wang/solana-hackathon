@@ -20,6 +20,9 @@ fn send_instruction(
     instruction: Instruction,
     payer: &Keypair,
 ) -> bool {
+    // New blockhash each time, so sending the same instruction twice is a real
+    // second attempt instead of being rejected as a duplicate transaction
+    svm.expire_blockhash();
     let blockhash = svm.latest_blockhash();
 
     let message = Message::new_with_blockhash(
@@ -113,14 +116,40 @@ fn accept_bounty(svm: &mut LiteSVM, program_id: Pubkey, bounty: Pubkey, worker: 
     send_instruction(svm, instruction, worker)
 }
 
-// Someone calls approve_bounty. Returns true if it succeeded.
-fn approve_bounty(svm: &mut LiteSVM, program_id: Pubkey, bounty: Pubkey, signer: &Keypair) -> bool {
+// Worker submits a link to their finished work.
+fn submit_work(svm: &mut LiteSVM, program_id: Pubkey, bounty: Pubkey, worker: &Keypair) -> bool {
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &bounty_board::instruction::SubmitWork {
+            submission_ref: "https://example.com/finished-logo".to_string(),
+        }
+        .data(),
+        bounty_board::accounts::SubmitWork {
+            bounty,
+            worker: worker.pubkey(),
+        }
+        .to_account_metas(None),
+    );
+
+    send_instruction(svm, instruction, worker)
+}
+
+// Someone calls approve_bounty, naming `worker` as the wallet to pay.
+// Returns true if it succeeded.
+fn approve_bounty(
+    svm: &mut LiteSVM,
+    program_id: Pubkey,
+    bounty: Pubkey,
+    signer: &Keypair,
+    worker: Pubkey,
+) -> bool {
     let instruction = Instruction::new_with_bytes(
         program_id,
         &bounty_board::instruction::ApproveBounty {}.data(),
         bounty_board::accounts::ApproveBounty {
             bounty,
             creator: signer.pubkey(),
+            worker,
         }
         .to_account_metas(None),
     );
@@ -130,11 +159,11 @@ fn approve_bounty(svm: &mut LiteSVM, program_id: Pubkey, bounty: Pubkey, signer:
 
 #[test]
 fn test_cannot_approve_open_bounty() {
-    let (mut svm, program_id, creator, _worker, _stranger) = setup();
+    let (mut svm, program_id, creator, worker, _stranger) = setup();
     let bounty = create_bounty(&mut svm, program_id, &creator);
 
     // Nobody has accepted or submitted yet, so approving must fail
-    assert!(!approve_bounty(&mut svm, program_id, bounty, &creator));
+    assert!(!approve_bounty(&mut svm, program_id, bounty, &creator, worker.pubkey()));
 
     // Status should still be Open
     assert!(read_bounty(&svm, &bounty).status == BountyStatus::Open);
@@ -147,7 +176,7 @@ fn test_cannot_approve_before_submission() {
     assert!(accept_bounty(&mut svm, program_id, bounty, &worker));
 
     // Worker accepted but hasn't submitted, so approving must fail
-    assert!(!approve_bounty(&mut svm, program_id, bounty, &creator));
+    assert!(!approve_bounty(&mut svm, program_id, bounty, &creator, worker.pubkey()));
 
     // Status should still be Accepted
     assert!(read_bounty(&svm, &bounty).status == BountyStatus::Accepted);
@@ -160,13 +189,57 @@ fn test_only_creator_can_approve() {
     assert!(accept_bounty(&mut svm, program_id, bounty, &worker));
 
     // A stranger tries to approve: must fail
-    assert!(!approve_bounty(&mut svm, program_id, bounty, &stranger));
+    assert!(!approve_bounty(&mut svm, program_id, bounty, &stranger, worker.pubkey()));
 
     // The worker tries to approve their own work: must fail
-    assert!(!approve_bounty(&mut svm, program_id, bounty, &worker));
+    assert!(!approve_bounty(&mut svm, program_id, bounty, &worker, worker.pubkey()));
 
     assert!(read_bounty(&svm, &bounty).status == BountyStatus::Accepted);
 }
 
-// TODO: once submit_work is merged, add a test for the success case:
-// create -> accept -> submit_work -> approve, then check status == Completed
+const REWARD: u64 = 100_000_000; // same reward create_bounty uses
+
+#[test]
+fn test_approve_pays_worker_from_escrow() {
+    let (mut svm, program_id, creator, worker, _stranger) = setup();
+    let bounty = create_bounty(&mut svm, program_id, &creator);
+    assert!(accept_bounty(&mut svm, program_id, bounty, &worker));
+    assert!(submit_work(&mut svm, program_id, bounty, &worker));
+
+    let worker_before = svm.get_balance(&worker.pubkey()).unwrap();
+    let escrow_before = svm.get_balance(&bounty).unwrap();
+
+    // Creator approves (and pays the fee), so the worker's balance changes by exactly the reward
+    assert!(approve_bounty(&mut svm, program_id, bounty, &creator, worker.pubkey()));
+
+    assert_eq!(svm.get_balance(&worker.pubkey()).unwrap(), worker_before + REWARD);
+    assert_eq!(svm.get_balance(&bounty).unwrap(), escrow_before - REWARD);
+    assert!(read_bounty(&svm, &bounty).status == BountyStatus::Completed);
+}
+
+#[test]
+fn test_cannot_pay_a_different_wallet() {
+    let (mut svm, program_id, creator, worker, stranger) = setup();
+    let bounty = create_bounty(&mut svm, program_id, &creator);
+    assert!(accept_bounty(&mut svm, program_id, bounty, &worker));
+    assert!(submit_work(&mut svm, program_id, bounty, &worker));
+
+    // Creator tries to send the reward to someone who isn't the worker: must fail
+    assert!(!approve_bounty(&mut svm, program_id, bounty, &creator, stranger.pubkey()));
+
+    assert!(read_bounty(&svm, &bounty).status == BountyStatus::Submitted);
+}
+
+#[test]
+fn test_cannot_approve_twice() {
+    let (mut svm, program_id, creator, worker, _stranger) = setup();
+    let bounty = create_bounty(&mut svm, program_id, &creator);
+    assert!(accept_bounty(&mut svm, program_id, bounty, &worker));
+    assert!(submit_work(&mut svm, program_id, bounty, &worker));
+    assert!(approve_bounty(&mut svm, program_id, bounty, &creator, worker.pubkey()));
+
+    // Already Completed, so a second approve must fail (no double payout)
+    let worker_before = svm.get_balance(&worker.pubkey()).unwrap();
+    assert!(!approve_bounty(&mut svm, program_id, bounty, &creator, worker.pubkey()));
+    assert_eq!(svm.get_balance(&worker.pubkey()).unwrap(), worker_before);
+}

@@ -197,7 +197,6 @@ impl Bounty {
         Ok(())
     }
 
-<<<<<<< HEAD
     //creator approves work (called by approve_bounty.rs) and sets the status to approved if the bounty is submitted and the deadline has not passed
     pub fn complete(&mut self) -> Result<()>{
         
@@ -228,7 +227,6 @@ impl Bounty {
 
 
 
-=======
     //Allows assigned worker to complete work
     pub fn submit_work(
         &mut self,
@@ -266,5 +264,4 @@ impl Bounty {
 
         Ok(())
     }
->>>>>>> 3b30a9fa43651fb553e2a3d5037d3d6c9179b079
 }
