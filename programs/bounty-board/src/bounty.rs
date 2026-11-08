@@ -196,7 +196,7 @@ impl Bounty {
     }
 
     //the creator cancels the bounty
-    pub fn cancel(@mut self) -> Result<()>{
+    pub fn cancel(&mut self) -> Result<()>{
         //can only cancel the bounty when no one has accepted the job and the deadline has not passed
         require!(
             self.status == BountyStatus::Open, 
