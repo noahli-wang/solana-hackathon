@@ -1,11 +1,17 @@
-import { useState, type SyntheticEvent } from "react";
-import { CalendarDays, CircleHelp, Eye, Plus } from "lucide-react";
+
+import { useState, type FormEvent } from "react";
 import {
-  categories,
-  dateLabel,
-  sol,
-  type BountyDraft,
-} from "../types/bounty";
+  CalendarDays,
+  Coins,
+  Eye,
+  Lightbulb,
+  Plus,
+  X,
+} from "lucide-react";
+
+import type { BountyDraft } from "../../types/bounty";
+import { categories } from "../../types/bounty";
+
 import "./CreateBounty.css";
 
 interface CreateBountyProps {
@@ -13,218 +19,445 @@ interface CreateBountyProps {
   onCancel: () => void;
 }
 
-const suggestedTags = ["web3", "solana", "smart-contract", "ui/ux"];
+const MAX_TITLE_BYTES = 64;
+const MAX_DESCRIPTION_BYTES = 200;
+const MAX_U64 = (1n << 64n) - 1n;
 
-const initialForm = {
-  title: "",
-  description: "",
-  reward: "",
-  deadline: "",
-  category: "",
-  tags: [] as string[],
-};
+const availableTags = [
+  "React",
+  "Solana",
+  "TypeScript",
+  "JavaScript",
+  "Rust",
+  "Anchor",
+  "Frontend",
+  "Backend",
+  "UI/UX",
+  "Design",
+  "Web3",
+  "Smart Contracts",
+  "Writing",
+  "Research",
+  "Marketing",
+];
 
-// Use the local date rather than UTC, so the minimum date is correct locally.
-function todayLocal(): string {
+function getLocalToday(): string {
   const now = new Date();
+
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
+}
+
+function parseReward(value: string): bigint | null {
+  const trimmed = value.trim();
+
+  if (!/^\d+(\.\d{1,9})?$/.test(trimmed)) {
+    return null;
+  }
+
+  const [whole, fraction = ""] = trimmed.split(".");
+
+  try {
+    const lamports =
+      BigInt(whole) * 1_000_000_000n +
+      BigInt(fraction.padEnd(9, "0"));
+
+    if (lamports <= 0n || lamports > MAX_U64) {
+      return null;
+    }
+
+    return lamports;
+  } catch {
+    return null;
+  }
 }
 
 export default function CreateBounty({
   onCreate,
   onCancel,
 }: CreateBountyProps) {
-  const [form, setForm] = useState(initialForm);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [reward, setReward] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [category, setCategory] = useState("Development");
+
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    []
+  );
+
+  const [customTag, setCustomTag] = useState("");
   const [error, setError] = useState("");
 
-  // Update one field in the form.
-  function updateField(
-    field: "title" | "description" | "reward" | "deadline" | "category",
-    value: string
-  ) {
-    setForm((previous) => ({ ...previous, [field]: value }));
-    setError("");
-  }
+  const encoder = new TextEncoder();
 
-  // Select or deselect a suggested tag.
+  const titleBytes = encoder.encode(title.trim()).length;
+  const descriptionBytes = encoder.encode(
+    description.trim()
+  ).length;
+
+  const today = getLocalToday();
+
   function toggleTag(tag: string) {
-    setForm((previous) => ({
-      ...previous,
-      tags: previous.tags.includes(tag)
-        ? previous.tags.filter((item) => item !== tag)
-        : [...previous.tags, tag],
-    }));
+    setSelectedTags((current) =>
+      current.includes(tag)
+        ? current.filter((item) => item !== tag)
+        : [...current, tag]
+    );
   }
 
-  // Validate the bounty, then send it to the parent App.
-  function handleSubmit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
-    event.preventDefault();
+  function addCustomTag() {
+    const tag = customTag.trim();
 
-    const reward = Number(form.reward);
+    if (!tag) return;
 
     if (
-      !form.title.trim() ||
-      !form.description.trim() ||
-      !form.deadline ||
-      !form.reward.trim() ||
-      !Number.isFinite(reward) ||
-      reward <= 0
+      !selectedTags.some(
+        (item) => item.toLowerCase() === tag.toLowerCase()
+      )
     ) {
-      setError("Complete the title, description, positive reward, and deadline.");
-      return;
+      setSelectedTags((current) => [...current, tag]);
     }
 
-    if (form.deadline < todayLocal()) {
-      setError("Choose a deadline that has not passed.");
-      return;
-    }
-
-    setError("");
-    onCreate({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      reward,
-      deadline: form.deadline,
-      category: form.category || "Other",
-      tags: form.tags,
-    });
+    setCustomTag("");
   }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    const cleanTitle = title.trim();
+    const cleanDescription = description.trim();
+
+    if (
+      titleBytes < 1 ||
+      titleBytes > MAX_TITLE_BYTES
+    ) {
+      setError(
+        "Title must contain between 1 and 64 bytes."
+      );
+      return;
+    }
+
+    if (
+      descriptionBytes < 1 ||
+      descriptionBytes > MAX_DESCRIPTION_BYTES
+    ) {
+      setError(
+        "Description must contain between 1 and 200 bytes."
+      );
+      return;
+    }
+
+    const rewardLamports = parseReward(reward);
+
+    if (rewardLamports === null) {
+      setError(
+        "Enter a positive SOL reward with up to 9 decimal places."
+      );
+      return;
+    }
+
+    const rewardAmount = Number(reward);
+
+    if (!Number.isFinite(rewardAmount)) {
+      setError("Invalid reward amount.");
+      return;
+    }
+
+    if (!deadline) {
+      setError("Please select a deadline.");
+      return;
+    }
+
+    const deadlineTimestamp = new Date(
+      `${deadline}T23:59:00`
+    ).getTime();
+
+    if (
+      !Number.isFinite(deadlineTimestamp) ||
+      deadlineTimestamp <= Date.now()
+    ) {
+      setError(
+        "Please choose a future deadline."
+      );
+      return;
+    }
+
+    const bounty: BountyDraft = {
+      title: cleanTitle,
+      description: cleanDescription,
+      reward: rewardAmount,
+      deadline,
+      category,
+      tags: selectedTags,
+    };
+
+    onCreate(bounty);
+  }
+
+  const displayDeadline = deadline
+    ? new Date(
+        `${deadline}T12:00:00`
+      ).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "No deadline set";
+
+  const displayReward = reward
+    ? Number(reward).toLocaleString("en-US", {
+        maximumFractionDigits: 9,
+      })
+    : "0";
+
+  const allTags = [
+    ...availableTags,
+    ...selectedTags.filter(
+      (tag) => !availableTags.includes(tag)
+    ),
+  ];
 
   return (
     <main className="create-page">
-      {/* Page heading */}
-      <header className="create-heading">
+      {/* PAGE HEADING */}
+      <div className="create-heading">
         <h1>Create Bounty</h1>
-        <p>Post an opportunity for the Solana community to complete.</p>
-      </header>
+        <p>
+          Post an opportunity for the Solana community
+          to complete.
+        </p>
+      </div>
 
+      {/* TWO-COLUMN LAYOUT */}
       <div className="create-layout">
-        {/* Bounty creation form */}
-        <form className="create-form" onSubmit={handleSubmit}>
-          {/* Title */}
+        {/* LEFT COLUMN — FORM */}
+        <form
+          className="create-form"
+          onSubmit={handleSubmit}
+        >
+          {/* TITLE */}
           <div className="create-field">
-            <label htmlFor="bounty-title">Title *</label>
+            <label htmlFor="create-title">
+              Title *
+            </label>
+
             <input
-              id="bounty-title"
-              name="title"
+              id="create-title"
               type="text"
-              maxLength={110}
+              value={title}
+              onChange={(event) =>
+                setTitle(event.target.value)
+              }
+              placeholder="e.g. Build a Solana landing page"
               required
-              placeholder="e.g., Build a Solana staking dashboard"
-              value={form.title}
-              onChange={(event) => updateField("title", event.target.value)}
             />
-            <small>A short, clear title for your bounty.</small>
+
+            <small>
+              {titleBytes}/{MAX_TITLE_BYTES} bytes
+            </small>
           </div>
 
-          {/* Description */}
+          {/* DESCRIPTION */}
           <div className="create-field">
-            <label htmlFor="bounty-description">Description Reference *</label>
+            <label htmlFor="create-description">
+              Description *
+            </label>
+
             <textarea
-              id="bounty-description"
-              name="description"
+              id="create-description"
+              value={description}
+              onChange={(event) =>
+                setDescription(event.target.value)
+              }
+              placeholder="Describe the project, deliverables, and expectations..."
               rows={6}
               required
-              placeholder="Describe the task, requirements, and useful references..."
-              value={form.description}
-              onChange={(event) =>
-                updateField("description", event.target.value)
-              }
             />
-            <small>Include scope, deliverables, and acceptance criteria.</small>
+
+            <small>
+              {descriptionBytes}/{MAX_DESCRIPTION_BYTES} bytes
+            </small>
           </div>
 
-          {/* Reward and deadline */}
+          {/* REWARD + DEADLINE */}
           <div className="create-field-row">
             <div className="create-field">
-              <label htmlFor="bounty-reward">Reward Amount (SOL) *</label>
+              <label htmlFor="create-reward">
+                Reward (SOL) *
+              </label>
+
               <input
-                id="bounty-reward"
-                name="reward"
+                id="create-reward"
                 type="number"
-                min="0.0001"
+                min="0.000000001"
                 step="any"
+                value={reward}
+                onChange={(event) =>
+                  setReward(event.target.value)
+                }
+                placeholder="e.g. 1.0"
                 required
-                placeholder="e.g., 5.0"
-                value={form.reward}
-                onChange={(event) => updateField("reward", event.target.value)}
               />
-              <small>Amount paid to the contributor.</small>
+
+              <small>
+                Reward is deposited into escrow.
+              </small>
             </div>
 
             <div className="create-field">
-              <label htmlFor="bounty-deadline">Deadline *</label>
+              <label htmlFor="create-deadline">
+                Deadline *
+              </label>
+
               <input
-                id="bounty-deadline"
-                name="deadline"
+                id="create-deadline"
                 type="date"
-                min={todayLocal()}
-                required
-                value={form.deadline}
+                value={deadline}
+                min={today}
                 onChange={(event) =>
-                  updateField("deadline", event.target.value)
+                  setDeadline(event.target.value)
                 }
+                required
               />
-              <small>When the task must be completed.</small>
+
+              <small>
+                When should the work be completed?
+              </small>
             </div>
           </div>
 
-          {/* Category */}
+          {/* CATEGORY */}
           <div className="create-field">
-            <label htmlFor="bounty-category">Category (optional)</label>
+            <label htmlFor="create-category">
+              Category
+            </label>
+
             <select
-              id="bounty-category"
-              name="category"
-              value={form.category}
+              id="create-category"
+              value={category}
               onChange={(event) =>
-                updateField("category", event.target.value)
+                setCategory(event.target.value)
               }
             >
-              <option value="">Select a category</option>
-              {categories.slice(1).map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
+              {categories
+                .filter((item) => item !== "All")
+                .map((item) => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                ))}
             </select>
           </div>
 
-          {/* Suggested tags */}
+          {/* ORIGINAL SELECTABLE TAGS */}
           <fieldset className="create-tags-fieldset">
-            <legend>Tags (optional)</legend>
+            <legend>Tags</legend>
+
             <div className="create-tag-list">
-              {suggestedTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={`create-tag ${
-                    form.tags.includes(tag) ? "selected" : ""
-                  }`}
-                  aria-pressed={form.tags.includes(tag)}
-                  onClick={() => toggleTag(tag)}
-                >
-                  {form.tags.includes(tag) ? "✓" : "+"} {tag}
-                </button>
-              ))}
+              {allTags.map((tag) => {
+                const selected =
+                  selectedTags.includes(tag);
+
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    aria-pressed={selected}
+                    className={
+                      selected
+                        ? "create-tag selected"
+                        : "create-tag"
+                    }
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {selected ? "✓ " : "+ "}
+                    {tag}
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
 
-          {/* Form error message */}
-          {error && (
-            <p className="create-form-error" role="alert">
-              {error}
-            </p>
+          {/* CUSTOM TAG */}
+          <div className="create-field">
+            <label htmlFor="create-custom-tag">
+              Add Custom Tag
+            </label>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <input
+                id="create-custom-tag"
+                type="text"
+                value={customTag}
+                onChange={(event) =>
+                  setCustomTag(event.target.value)
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addCustomTag();
+                  }
+                }}
+                placeholder="e.g. Python"
+              />
+
+              <button
+                type="button"
+                className="create-cancel-button"
+                onClick={addCustomTag}
+              >
+                <Plus size={16} />
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* SELECTED TAGS */}
+          {selectedTags.length > 0 && (
+            <div className="create-field">
+              <label>Selected Tags</label>
+
+              <div className="create-tag-list">
+                {selectedTags.map((tag) => (
+                  <button
+                    type="button"
+                    key={tag}
+                    className="create-tag selected"
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {tag}
+                    <X size={12} />
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* Submit and cancel actions */}
+          {/* ERROR */}
+          {error && (
+            <div
+              className="create-form-error"
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
+
+          {/* ACTION BUTTONS */}
           <div className="create-actions">
-            <button type="submit" className="create-submit-button">
-              <Plus size={17} />
-              Create Bounty
-            </button>
             <button
               type="button"
               className="create-cancel-button"
@@ -232,34 +465,56 @@ export default function CreateBounty({
             >
               Cancel
             </button>
+
+            <button
+              type="submit"
+              className="create-submit-button"
+            >
+              <Plus size={17} />
+              Create Bounty
+            </button>
           </div>
         </form>
 
-        {/* Live bounty preview and posting tips */}
+        {/* RIGHT COLUMN */}
         <aside className="create-sidebar">
-          <section className="create-preview-panel">
+          {/* LIVE PREVIEW */}
+          <div className="create-preview-panel">
             <div className="create-panel-heading">
               <h2>
-                <Eye size={18} />
+                <Eye size={19} />
                 Preview
               </h2>
-              <p>How your bounty will appear on the board.</p>
+
+              <p>
+                How your bounty will appear on
+                the board.
+              </p>
             </div>
 
-            <article className="create-preview-card">
+            <div className="create-preview-card">
               <div className="create-preview-title">
-                <h3>{form.title || "Your Bounty Title"}</h3>
-                <span className="create-status">Open</span>
+                <h3>
+                  {title.trim() || "Your bounty title"}
+                </h3>
+
+                <span className="create-status">
+                  Open
+                </span>
               </div>
 
               <p className="create-preview-description">
-                {form.description || "Your bounty description will appear here..."}
+                {description.trim() ||
+                  "Your bounty description will appear here."}
               </p>
 
-              {form.tags.length > 0 && (
+              {selectedTags.length > 0 && (
                 <div className="create-tag-list">
-                  {form.tags.map((tag) => (
-                    <span className="create-tag" key={tag}>
+                  {selectedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="create-tag"
+                    >
                       {tag}
                     </span>
                   ))}
@@ -267,30 +522,67 @@ export default function CreateBounty({
               )}
 
               <div className="create-preview-footer">
-                <strong>
-                  {Number(form.reward) > 0
-                    ? sol(Number(form.reward))
-                    : "0 SOL"}
-                </strong>
-                <span>
-                  <CalendarDays size={15} />
-                  {form.deadline ? dateLabel(form.deadline) : "Select deadline"}
-                </span>
-              </div>
-            </article>
-          </section>
+                <div>
+                  <span>
+                    <Coins size={15} />
+                    Reward
+                  </span>
 
-          <section className="create-tips-panel">
+                  <div>
+                    <strong>
+                      {displayReward} SOL
+                    </strong>
+                  </div>
+                </div>
+
+                <div>
+                  <span>
+                    <CalendarDays size={15} />
+                    Deadline
+                  </span>
+
+                  <div>
+                    <span>
+                      {displayDeadline}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* TIPS PANEL */}
+          <div className="create-tips-panel">
             <h2>
-              <CircleHelp size={18} />
-              Posting Tips
+              <Lightbulb size={19} />
+              Tips for a Great Bounty
             </h2>
+
             <ul>
-              <li>Write a clear and specific description.</li>
-              <li>Include useful references like GitHub or documentation.</li>
-              <li>Set a realistic reward and deadline.</li>
+              <li>
+                Write a clear and descriptive title.
+              </li>
+
+              <li>
+                Explain exactly what needs to be
+                delivered.
+              </li>
+
+              <li>
+                Set a fair reward for the amount
+                of work required.
+              </li>
+
+              <li>
+                Choose a realistic deadline.
+              </li>
+
+              <li>
+                Add relevant tags to help
+                describe the project.
+              </li>
             </ul>
-          </section>
+          </div>
         </aside>
       </div>
     </main>
