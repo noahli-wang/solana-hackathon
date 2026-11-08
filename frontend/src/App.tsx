@@ -5,7 +5,6 @@ import Layout from "./components/Layout";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import BookmarksPage from "./pages/BookmarksPage/BookmarksPage.tsx";
 import MyBountiesPage from "./pages/MyBountiesPage/MyBountiesPage";
-import BountyConnectionTest from "./components/BountyConnectionTest";
 
 type Page = "browse" | "bookmarks" | "my-bounties" | "settings";
 
@@ -126,8 +125,6 @@ function App() {
       activePage={activePage}
       onNavigate={handleNavigate}
     >
-      {/* Temporary Devnet connection test */}
-      <BountyConnectionTest />
 
       {/* Existing application pages */}
       {renderPage()}
