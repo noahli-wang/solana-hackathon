@@ -1,4 +1,4 @@
-
+import BountyDescPage from "../BountyDescPage/BountyDescPage";
 import { useState } from "react";
 import {
   Search,
@@ -168,6 +168,17 @@ export default function BrowsePage() {
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
+  if (selectedBounty) {
+    return (
+      <BountyDescPage
+        key={selectedBounty.id}
+        bounty={selectedBounty}
+        isBookmarked={bookmarks.has(selectedBounty.id)}
+        onBookmark={toggleBookmark}
+        onBack={() => setSelectedBounty(null)}
+      />
+    );
+  }
 
   return (
     <main className="browse-page">
@@ -461,88 +472,6 @@ export default function BrowsePage() {
             <ChevronRight size={17} />
           </button>
         </nav>
-      )}
-
-      {/* Temporary bounty details modal */}
-      {selectedBounty && (
-        <div
-          className="details-overlay"
-          onClick={() => setSelectedBounty(null)}
-        >
-          <section
-            className="details-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="details-title"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-            <div className="details-modal-header">
-              <h2 id="details-title">
-                {selectedBounty.title}
-              </h2>
-
-              <button
-                type="button"
-                aria-label="Close details"
-                onClick={() =>
-                  setSelectedBounty(null)
-                }
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <span
-              className={`bounty-status status-${selectedBounty.status.toLowerCase()}`}
-            >
-              {selectedBounty.status}
-            </span>
-
-            <div className="details-reward">
-              {Number(selectedBounty.rewardLamports) /
-                1_000_000_000}{" "}
-              SOL
-            </div>
-
-            <p className="details-label">Description</p>
-            <p>{selectedBounty.descriptionRef}</p>
-
-            <p className="details-label">Tags</p>
-
-            <div className="bounty-tags">
-              {selectedBounty.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bounty-tag"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            <p className="details-label">Deadline</p>
-            <p>
-              {new Date(
-                selectedBounty.deadline * 1000
-              ).toLocaleDateString()}
-            </p>
-
-            <p className="details-label">Creator</p>
-            <p>{selectedBounty.creator}</p>
-
-            <button
-              type="button"
-              className="modal-close-button"
-              onClick={() =>
-                setSelectedBounty(null)
-              }
-            >
-              Back to Bounties
-            </button>
-          </section>
-        </div>
       )}
     </main>
   );

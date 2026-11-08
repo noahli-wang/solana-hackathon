@@ -1,0 +1,408 @@
+/* Bounty Details page (BountyDescPage) — layout follows wireframe #2 */
+
+.details-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 32px 48px;
+  text-align: left;
+}
+
+/* Back button */
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  border-color: #7654d6;
+  color: #7654d6;
+}
+
+.details-page-title {
+  margin: 14px 0 22px;
+  color: #1f2937;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: normal;
+}
+
+/* Two-column layout */
+
+.details-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.details-bounty-title {
+  margin: 0 0 16px;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* Reward / status / deadline row */
+
+.details-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  background: white;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.meta-chip svg {
+  color: #7654d6;
+}
+
+/* Created by */
+
+.details-creator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.details-creator strong {
+  color: #1f2937;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.copy-button:hover {
+  background: #f3f0ff;
+  color: #7654d6;
+}
+
+/* Description card */
+
+.details-card {
+  padding: 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.details-card h3 {
+  margin: 0 0 10px;
+  color: #1f2937;
+  font-size: 17px;
+}
+
+.details-card h3:not(:first-child) {
+  margin-top: 24px;
+}
+
+.details-description {
+  margin: 0;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.details-requirements {
+  margin: 0;
+  padding-left: 20px;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.details-tags {
+  margin: 22px 0 0;
+}
+
+/* Accept / Bookmark buttons */
+
+.details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.accept-button,
+.details-bookmark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 160px;
+  padding: 12px 22px;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.accept-button {
+  background: #7654d6;
+  color: white;
+  border: 1px solid #7654d6;
+}
+
+.accept-button:hover:not(:disabled) {
+  background: #5e3cb9;
+}
+
+.accept-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.details-bookmark-button {
+  background: white;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+
+.details-bookmark-button:hover,
+.details-bookmark-button.bookmarked {
+  background: #f3f0ff;
+  color: #7654d6;
+  border-color: #c4b5fd;
+}
+
+/* Right column: Submission / Progress panel */
+
+.progress-panel {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.progress-section {
+  padding: 18px 20px 20px;
+}
+
+.progress-section + .progress-section {
+  border-top: 1px solid #e5e7eb;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -18px -20px 14px;
+  padding: 14px 20px;
+  color: #1f2937;
+  font-size: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.progress-title {
+  margin: 0 0 6px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.progress-body {
+  margin: 0 0 14px;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.submitted-link {
+  margin: 0 0 14px;
+  color: #6b7280;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.submitted-link a {
+  color: #7654d6;
+}
+
+.submit-work-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit-work-button:hover:not(:disabled) {
+  background: #f3f0ff;
+  color: #7654d6;
+  border-color: #c4b5fd;
+}
+
+.submit-work-button:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.submit-form input,
+.note-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: white;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.submit-form input:focus,
+.note-form textarea:focus {
+  border-color: #7654d6;
+}
+
+.submit-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.panel-primary-button,
+.panel-secondary-button,
+.post-button {
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel-primary-button,
+.post-button {
+  background: #7654d6;
+  color: white;
+  border: 1px solid #7654d6;
+}
+
+.panel-secondary-button {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.panel-primary-button:disabled,
+.post-button:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* Progress notes */
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.notes-list li {
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid #f0f0f3;
+  border-radius: 8px;
+}
+
+.notes-list p {
+  margin: 0 0 4px;
+  color: #374151;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.notes-list time {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.note-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.note-form textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+/* Responsive */
+
+@media (max-width: 1000px) {
+  .details-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .details-page {
+    padding: 24px 16px 40px;
+  }
+
+  .details-page-title {
+    font-size: 26px;
+  }
+
+  .details-card {
+    padding: 18px;
+  }
+
+  .accept-button,
+  .details-bookmark-button {
+    flex: 1;
+  }
+}

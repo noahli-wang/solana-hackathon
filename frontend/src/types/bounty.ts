@@ -17,4 +17,5 @@ export interface Bounty {
   status: BountyStatus;
   submissionRef: string | null;
   tags: string[];
+  requirements?: string[];
 }
