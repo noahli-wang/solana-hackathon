@@ -10,8 +10,8 @@ skip-lint = false
 bounty_board = "DorphgTj2n5swnnt53Edymkds7P1MDjoKfQRRNC79weT"
 
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+cluster = "Devnet"
+wallet = "/Users/noahli-wang/.config/solana/devnet-new.json"
 
 [scripts]
 test = "cargo test"

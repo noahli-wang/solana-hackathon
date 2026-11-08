@@ -28,45 +28,24 @@ pub enum ErrorCode {
     #[msg("Creator cannot accept their own bounty")]
     CannotAcceptOwnBounty,
 
-<<<<<<< HEAD
     #[msg("Bounty not in the right status for this action")]
     InvalidStatus,
 
     #[msg("Only the creator of bounty can perform this action")]
     NotBountyCreator,
 
-
-
-=======
-    #[msg("Bounty mustbe accepted before submitting work")]
+    #[msg("Bounty must be accepted before submitting work")]
     BountyNotAccepted,
 
     #[msg("Only assigned worker can submit work")]
     UnauthorizedWorker,
 
-    #[msg("Invalid submission reference")]
-    InvalidSubmission,
-    #[msg("Only the bounty creator can do this")]
-    NotCreator,
-
-    #[msg("Only the assigned worker can do this")]
-    WrongWorker,
-
-    #[msg("Bounty is not in the Accepted state")]
-    BountyNotAccepted,
-
-    #[msg("Work has not been submitted yet")]
-    WorkNotSubmitted,
-
     #[msg("Submission reference must contain between 1 and 200 bytes")]
     InvalidSubmission,
 
-    #[msg("Bounty can only be cancelled while being open, or after the deadline if the work has not been submitted")]
-    CannotCancel,
+    #[msg("Worker account does not match the bounty's assigned worker")]
+    WrongWorker,
 
     #[msg("Bounty account does not hold enough lamports to pay the reward")]
-    InsufficientEscrow
->>>>>>> 3b30a9fa43651fb553e2a3d5037d3d6c9179b079
-    }
-
- 
+    InsufficientEscrow,
+}
